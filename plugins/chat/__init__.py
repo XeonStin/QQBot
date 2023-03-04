@@ -49,7 +49,7 @@ conversations: Dict[str, ChatGPTConversation] = {}
 
 @on_command('ChatGPT', aliases='chat')
 async def _(session: CommandSession):
-    message = session.state.get('message')
+    message = session.state.get('message').strip()
     if message == None:
         message = session.current_arg_text.strip()
     
@@ -72,6 +72,7 @@ async def _(session: CommandSession):
         # 判断敏感词
         for word in sensitive_words:
             if word in reply:
+                logger.info(f'ChatGPT reply contain sensitive word: {word}')
                 conversations[conversation_id].withdraw()
                 await session.send(reply_header + render_expression(EXPR_NO_COMMENT))
                 return 
@@ -124,11 +125,6 @@ async def _(session: CommandSession):
 
 
 # 自然语言处理部分
-
-@on_natural_language(keywords=sensitive_words, permission=usage_permission)
-async def _(session: NLPSession):
-    return IntentCommand(90.0, 'no_comment')
-
 
 @on_natural_language(keywords={'好好好'}, permission=lambda sender: sender.is_superuser, only_to_me=False)
 async def _(session: NLPSession):
