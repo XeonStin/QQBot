@@ -49,8 +49,10 @@ conversations: Dict[str, ChatGPTConversation] = {}
 
 @on_command('ChatGPT', aliases='chat')
 async def _(session: CommandSession):
+    # 从自然语言处理模块进入
     message = session.state.get('message').strip()
     if message == None:
+        # 从指令进入
         message = session.current_arg_text.strip()
     
     logger.info(f'ChatGPT: Entering command session with: {message}')
