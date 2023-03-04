@@ -33,7 +33,8 @@ EXPR_NO_COMMENT = (
 )
 
 
-def get_conversation_id(session: CommandSession):
+def get_conversation_id(session: CommandSession) -> str:
+    # 获取对话 ID，群聊则为群号，私聊则为 QQ 号
     if 'group_id' in session.event:
         conversation_id = session.event['group_id']
     else: 
