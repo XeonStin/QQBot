@@ -18,7 +18,7 @@ class ChatGPTConversation:
         self.history_messages =  []
     
 
-    async def ask(self, content: str):
+    async def ask(self, content: str) -> str:
         logger.info(f'ChatGPT: Ask: {content}')
         if not content:
             return None
@@ -50,7 +50,7 @@ class ChatGPTConversation:
         logger.info(f'ChatGPT: Last round withdrawn')
 
 
-    async def get_ChatGPT_reply(self, messages: List[dict]):
+    async def get_ChatGPT_reply(self, messages: List[dict]) -> str:
         response = await openai.ChatCompletion.acreate(
             model = "gpt-3.5-turbo",
             messages = messages,
