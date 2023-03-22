@@ -1,4 +1,5 @@
 from typing import Dict
+import random
 
 from aiocqhttp.message import escape
 
@@ -7,7 +8,7 @@ from nonebot import on_natural_language, NLPSession, IntentCommand
 from nonebot.helpers import render_expression
 from nonebot.log import logger
 
-from .ChatGPT_API import ChatGPTConversation
+from .ChatGPT_API import ChatGPTConversation, Nekomusume
 from .permission_checker import simple_allow_list
 from .sensitive_config import sensitive_words, user_whitelist, group_whitelist
 
@@ -67,7 +68,7 @@ async def _(session: CommandSession):
 
     conversation_id = get_conversation_id(session)
     if conversation_id not in conversations:
-        conversations[conversation_id] = ChatGPTConversation()
+        conversations[conversation_id] = Nekomusume()
     
     reply = await conversations[conversation_id].ask(message)
 
@@ -88,6 +89,38 @@ async def _(session: CommandSession):
         # 这里的 render_expression() 函数会将一个「表达」渲染成一个字符串消息
         logger.warning('ChatGPT: Reply is None')
         await session.send(reply_header + render_expression(EXPR_DONT_UNDERSTAND))
+
+
+@on_command('ChatGPT_simple', aliases='chat_simple')
+async def _(session: CommandSession):
+    # 从自然语言处理模块进入
+    message = session.state.get('message').strip()
+    if message == None:
+        # 从指令进入
+        message = session.current_arg_text.strip()
+    
+    logger.info(f'ChatGPT_simple: Entering command session with: {message}')
+
+    reply_header = ''
+
+    conversation_id = get_conversation_id(session)
+    if conversation_id not in conversations:
+        conversations[conversation_id] = Nekomusume()
+    
+    reply = await conversations[conversation_id].ask(message, tip='用你的方式复述我的话，但保留原本的意思。')
+
+    if reply:
+        # 判断敏感词
+        for word in sensitive_words:
+            if word in reply:
+                logger.info(f'ChatGPT reply contain sensitive word: {word}')
+                conversations[conversation_id].withdraw()
+                await session.send(reply_header + render_expression(EXPR_NO_COMMENT))
+                return 
+            
+        # 如果调用 GPT 成功，得到了回复，则转义之后发送给用户
+        # 转义会把消息中的某些特殊字符做转换，避免将它们理解为 CQ 码
+        await session.send(reply_header + escape(reply))
 
 
 @on_command('ChatGPT_clear', aliases='clear')
@@ -139,9 +172,19 @@ async def _(session: NLPSession):
     return IntentCommand(90.0, 'fsndl')
 
 
-@on_natural_language(permission=usage_permission, only_short_message=False)
+@on_natural_language(permission=usage_permission, only_short_message=False, only_to_me=False)
 async def _(session: NLPSession):
     # 以置信度 60.0 返回
     # 确保任何消息都在且仅在其它自然语言处理器无法理解的时候使用 GPT 命令
     text = session.msg_text
-    return IntentCommand(60.0, 'ChatGPT', args={'message': text})
+    raw_text = session.event.raw_message 
+    if f'[CQ:at,qq={session.self_id}]' in raw_text or 'group_id' not in session.event:
+        # 被at或私聊
+        logger.info(f'ChatGPT: Being at: {text}')
+        return IntentCommand(60.0, 'ChatGPT', args={'message': text})
+
+    if len(text) < 30 and random.random() < 0.2:
+        # 随机回答消息
+        logger.info(f'ChatGPT: Randomly answer: {text}')
+        return IntentCommand(60.0, 'ChatGPT_simple', args={'message': text})
+

@@ -1,8 +1,3 @@
-# Test plugin
-/plugins/test/*
-*sensitive_config.py
-
-
 ## Python Template
 
 # Byte-compiled / optimized / DLL files
@@ -134,5 +129,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# custom
 plugins/bilibili/routing_config.py
 config.py
+plugins/bilibili/routing_config.yaml
+QQBot.code-workspace
+# Test plugin
+/test/*
+/plugins/test/*
+*sensitive_config.py
