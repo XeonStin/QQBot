@@ -107,7 +107,7 @@ async def _(session: CommandSession):
     if conversation_id not in conversations:
         conversations[conversation_id] = Nekomusume()
     
-    reply = await conversations[conversation_id].ask(message, tip='用你的方式复述我的话，但保留原本的意思。')
+    reply = await conversations[conversation_id].ask(message, tip='用你的方式用二十字以内复述我的话，但保留原本的意思。')
 
     if reply:
         # 判断敏感词
@@ -183,7 +183,7 @@ async def _(session: NLPSession):
         logger.info(f'ChatGPT: Being at: {text}')
         return IntentCommand(60.0, 'ChatGPT', args={'message': text})
 
-    if len(text) < 30 and random.random() < 0.2:
+    if len(text) < 30 and random.random() < -1:
         # 随机回答消息
         logger.info(f'ChatGPT: Randomly answer: {text}')
         return IntentCommand(60.0, 'ChatGPT_simple', args={'message': text})
